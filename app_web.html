@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicción de Siniestros de Tránsito</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .badges {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        form {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        .section h3 {
+            color: #1e3c72;
+            font-size: 16px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e7ff;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        input, select {
+            padding: 10px 12px;
+            border: 2px solid #e0e7ff;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #resultado {
+            margin: 0 30px 30px 30px;
+            padding: 25px;
+            background: #f8faff;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+            display: none;
+        }
+
+        #resultado.visible {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .prediccion-principal {
+            font-size: 24px;
+            color: #1e3c72;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .confianza {
+            font-size: 14px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .probabilidades {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .prob-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .prob-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .prob-bar {
+            height: 10px;
+            background: #e0e7ff;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .prob-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 5px;
+            transition: width 0.8s ease;
+        }
+
+        .error {
+            color: #dc2626;
+            background: #fee2e2;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #dc2626;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚦 Predicción de Siniestros de Tránsito</h1>
+            <p>Modelo de Machine Learning (Random Forest)</p>
+            <div class="badges">
+                <span class="badge">📊 Precisión: 92.30%</span>
+                <span class="badge">🎯 ROC-AUC: 0.9793</span>
+            </div>
+        </header>
+
+        <form id="formulario">
+            <div class="section">
+                <h3>⏰ Variables Temporales</h3>
+                <div class="grid">
+                    <div class="field">
+                        <label for="hora">Hora del día (0-23)</label>
+                        <input type="number" id="hora" min="0" max="23" value="14" required>
+                    </div>
+                    <div class="field">
+                        <label for="dia">Día de la semana</label>
+                        <select id="dia">
+                            <option>LUNES</option>
+                            <option>MARTES</option>
+                            <option>MIÉRCOLES</option>
+                            <option>JUEVES</option>
+                            <option>VIERNES</option>
+                            <option>SÁBADO</option>
+                            <option>DOMINGO</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="feriado">¿Es feriado?</label>
+                        <select id="feriado">
+                            <option value="NO">NO</option>
+                            <option value="SI">SÍ</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>📍 Variables Geográficas</h3>
+                <div class="grid">
+                    <div class="field">
+                        <label for="zona">Zona</label>
+                        <select id="zona">
+                            <option>URBANA</option>
+                            <option>RURAL</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="provincia">Provincia</label>
+                        <select id="provincia">
+                            <option>PICHINCHA</option>
+                            <option>GUAYAS</option>
+                            <option>AZUAY</option>
+                            <option>MANABI</option>
+                            <option>TUNGURAHUA</option>
+                            <option>OTRA</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>🚗 Vehículos y Severidad</h3>
+                <div class="grid">
+                    <div class="field">
+                        <label for="tipo">Tipo de siniestro</label>
+                        <select id="tipo">
+                            <option>CHOQUE LATERAL</option>
+                            <option>CHOQUE FRONTAL</option>
+                            <option>CHOQUE POR ALCANCE</option>
+                            <option>ATROPELLO</option>
+                            <option>VOLCAMIENTO</option>
+                            <option>CAIDA DE PASAJERO</option>
+                            <option>OTRO</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="lesionados">Número de lesionados</label>
+                        <input type="number" id="lesionados" min="0" max="50" value="1" required>
+                    </div>
+                    <div class="field">
+                        <label for="fallecidos">Número de fallecidos</label>
+                        <input type="number" id="fallecidos" min="0" max="20" value="0" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>🛵 Vehículos involucrados</h3>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="moto">
+                        <label for="moto">Motocicleta</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="auto" checked>
+                        <label for="auto">Automóvil</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="bus">
+                        <label for="bus">Bus</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="camion">
+                        <label for="camion">Camión</label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="btnPredecir">🔮 Predecir Causa</button>
+        </form>
+
+        <div id="resultado"></div>
+
+        <div class="footer">
+            🎓 Proyecto de Minería de Datos | API Flask + HTML/JS
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:5000/predecir";
+
+        document.getElementById("formulario").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const btn = document.getElementById("btnPredecir");
+            const resultadoDiv = document.getElementById("resultado");
+
+            btn.disabled = true;
+            btn.textContent = "⏳ Consultando el modelo...";
+
+            const datos = {
+                HORA_NUM: parseInt(document.getElementById("hora").value),
+                DIA_1: document.getElementById("dia").value,
+                ES_FERIADO: document.getElementById("feriado").value,
+                ZONA: document.getElementById("zona").value,
+                PROVINCIA: document.getElementById("provincia").value,
+                TIPO_DE_SINIESTRO: document.getElementById("tipo").value,
+                LESIONADOS: parseInt(document.getElementById("lesionados").value),
+                FALLECIDOS: parseInt(document.getElementById("fallecidos").value),
+                TIENE_MOTOCICLETA: document.getElementById("moto").checked ? 1 : 0,
+                TIENE_AUTOMOVIL: document.getElementById("auto").checked ? 1 : 0
+            };
+
+            try {
+                const respuesta = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(datos)
+                });
+
+                if (!respuesta.ok) throw new Error("Error en la API");
+
+                const data = await respuesta.json();
+                mostrarResultado(data);
+            } catch (error) {
+                resultadoDiv.classList.add("visible");
+                resultadoDiv.innerHTML = `<div class="error">❌ No se pudo conectar a la API. Asegúrate de que <b>python app.py</b> esté corriendo.<br><br>Error: ${error.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "🔮 Predecir Causa";
+            }
+        });
+
+        function mostrarResultado(data) {
+            const resultadoDiv = document.getElementById("resultado");
+            const prediccion = data.prediccion;
+            const confianza = data.probabilidades[prediccion];
+            const probs = data.probabilidades;
+
+            // Ordenar probabilidades de mayor a menor
+            const probsOrdenadas = Object.entries(probs).sort((a, b) => b[1] - a[1]);
+
+            let html = `
+                <div class="prediccion-principal">🎯 ${prediccion}</div>
+                <div class="confianza">Confianza: ${(confianza * 100).toFixed(2)}%</div>
+                <div class="probabilidades">
+            `;
+
+            probsOrdenadas.forEach(([causa, prob]) => {
+                html += `
+                    <div class="prob-item">
+                        <div class="prob-header">
+                            <span>${causa}</span>
+                            <span>${(prob * 100).toFixed(2)}%</span>
+                        </div>
+                        <div class="prob-bar">
+                            <div class="prob-bar-fill" style="width: ${prob * 100}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += "</div>";
+            resultadoDiv.innerHTML = html;
+            resultadoDiv.classList.add("visible");
+        }
+    </script>
+</body>
+</html>

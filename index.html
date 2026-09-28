@@ -365,7 +365,8 @@
     </div>
 
     <script>
-        const API_URL = "https://api-siniestros.onrender.com/predecir";
+        // URL de la API local
+        const API_URL = "http://localhost:5000/predecir";
 
         document.getElementById("formulario").addEventListener("submit", async (e) => {
             e.preventDefault();
@@ -402,7 +403,7 @@
                 mostrarResultado(data);
             } catch (error) {
                 resultadoDiv.classList.add("visible");
-                resultadoDiv.innerHTML = `<div class="error">❌ No se pudo conectar a la API. Asegúrate de que <b>python app.py</b> esté corriendo.<br><br>Error: ${error.message}</div>`;
+                resultadoDiv.innerHTML = `<div class="error">❌ No se pudo conectar a la API.<br><br>Error: ${error.message}</div>`;
             } finally {
                 btn.disabled = false;
                 btn.textContent = "🔮 Predecir Causa";
@@ -415,7 +416,6 @@
             const confianza = data.probabilidades[prediccion];
             const probs = data.probabilidades;
 
-            // Ordenar probabilidades de mayor a menor
             const probsOrdenadas = Object.entries(probs).sort((a, b) => b[1] - a[1]);
 
             let html = `
